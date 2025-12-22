@@ -4,32 +4,31 @@ import {
   Inbox,
   AlertCircle,
   CheckCircle,
-  BarChart3,
   Settings,
 } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Separator } from "../components/ui/separator";
+import { useNavigate } from "react-router-dom";
 
-import { Button } from "./ui/button";
-import { Separator } from "./ui/separator";
+export default function AgentSidebar() {
+  const navigate = useNavigate();
 
-export default function Sidebar() {
   return (
     <aside className="h-screen w-64 bg-white shadow-md fixed left-0 top-0 pt-16">
       <div className="px-4 py-6 space-y-2">
-        {/* Dashboard */}
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => (window.location.href = "/agent/dashboard")}
+          onClick={() => navigate("/agent/dashboard")}
         >
           <LayoutDashboard className="h-5 w-5" />
           Dashboard
         </Button>
 
-        {/* Tickets */}
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => (window.location.href = "/agent/tickets")}
+          onClick={() => navigate("/agent/tickets")}
         >
           <Ticket className="h-5 w-5" />
           My Tickets
@@ -38,7 +37,7 @@ export default function Sidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => (window.location.href = "/agent/unread")}
+          onClick={() => navigate("/agent/unread")}
         >
           <Inbox className="h-5 w-5" />
           Unread Replies
@@ -47,16 +46,16 @@ export default function Sidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => (window.location.href = "/agent/overdue")}
+          onClick={() => navigate("/agent/overdue")}
         >
           <AlertCircle className="h-5 w-5 text-red-500" />
-          Overdue Tickets
+          Overdue
         </Button>
 
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => (window.location.href = "/agent/resolved")}
+          onClick={() => navigate("/agent/resolved")}
         >
           <CheckCircle className="h-5 w-5 text-green-500" />
           Resolved
@@ -64,14 +63,13 @@ export default function Sidebar() {
 
         <Separator className="my-4" />
 
-        {/* Reports */}
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => (window.location.href = "/agent/reports")}
+          onClick={() => navigate("/settings")}
         >
-          <BarChart3 className="h-5 w-5" />
-          Reports
+          <Settings className="h-5 w-5" />
+          Settings
         </Button>
       </div>
     </aside>

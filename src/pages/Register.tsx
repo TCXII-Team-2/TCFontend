@@ -1,14 +1,19 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ ADDED
-import { ROLES } from "../types/roleUser"; // ✅ Make sure you have roles.ts
+import { useNavigate } from "react-router-dom";
+import { ROLES } from "../types/roleUser";
+import logo from "../assets/logo.svg";
+import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 
 export default function Register() {
-  const navigate = useNavigate(); // ✅ ADDED
+  const navigate = useNavigate();
 
   const [firstName, setFirstName] = useState("");
   const [familyName, setFamilyName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,36 +23,37 @@ export default function Register() {
     setIsLoading(true);
 
     try {
-      // Add your register API call here
-      console.log("Register attempt:", {
-        firstName,
-        familyName,
-        email,
-        password,
-      });
-
-      // Simulated validation
-      if (!firstName || !familyName || !email || !password) {
+      if (
+        !firstName ||
+        !familyName ||
+        !email ||
+        !password ||
+        !confirmPassword
+      ) {
         setError("Please fill in all fields");
+        setIsLoading(false);
         return;
       }
 
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters");
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters");
+        setIsLoading(false);
         return;
       }
 
-      // -------- ADDED ROLE SIMULATION & REDIRECT --------
-      // Simulate assigning role based on email pattern or other logic
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        setIsLoading(false);
+        return;
+      }
+
       let role: string = "";
       if (email.includes("admin")) role = ROLES.ADMIN;
       else if (email.includes("agent")) role = ROLES.AGENT;
-      else role = ROLES.CLIENT; // default to client
+      else role = ROLES.CLIENT;
 
-      // Save role to localStorage
       localStorage.setItem("userRole", role);
 
-      // Redirect based on role
       switch (role) {
         case ROLES.ADMIN:
           navigate("/dashboard/admin");
@@ -62,14 +68,6 @@ export default function Register() {
           navigate("/unauthorized");
           break;
       }
-      // ---------------------------------------------------
-
-      // TODO: Replace with actual API call
-      // const response = await fetch('/api/register', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ firstName, familyName, email, password })
-      // });
     } catch (err) {
       setError("An error occurred. Please try again.");
       console.error(err);
@@ -79,67 +77,142 @@ export default function Register() {
   };
 
   return (
-    <div>
-      <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="firstName">First Name:</label>
-          <input
-            id="firstName"
-            type="text"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
-            placeholder="Enter your first name"
-            required
-          />
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="w-full max-w-md bg-white rounded-lg p-6 m-8 shadow-lg">
+        {/* Centered Logo */}
+        <div className="flex justify-center ">
+          <img src={logo} alt="Logo" className="h-26  w-26" />
         </div>
 
-        <div>
-          <label htmlFor="familyName">Family Name:</label>
-          <input
-            id="familyName"
-            type="text"
-            value={familyName}
-            onChange={(e) => setFamilyName(e.target.value)}
-            placeholder="Enter your family name"
-            required
-          />
-        </div>
+        <h1 className="text-2xl font-bold mb-6 text-center">Register</h1>
 
-        <div>
-          <label htmlFor="email">Email:</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Enter your email"
-            required
-          />
-        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {/* First Name */}
+          <div className="flex flex-col gap-1">
+            <label htmlFor="firstName" className="text-sm font-medium">
+              First Name
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="Enter your first name"
+              required
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="password">Password:</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter your password"
-            required
-          />
-        </div>
+          {/* Family Name */}
+          <div className="flex flex-col gap-1">
+            <label htmlFor="familyName" className="text-sm font-medium">
+              Family Name
+            </label>
+            <input
+              id="familyName"
+              type="text"
+              value={familyName}
+              onChange={(e) => setFamilyName(e.target.value)}
+              placeholder="Enter your family name"
+              required
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-        {error && <p style={{ color: "red" }}>{error}</p>}
+          {/* Email */}
+          <div className="flex flex-col gap-1">
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Enter your email"
+              required
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
 
-        <button type="submit" disabled={isLoading}>
-          {isLoading ? "Registering..." : "Register"}
-        </button>
-      </form>
+          {/* Password */}
+          <div className="flex flex-col gap-1 relative">
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
+            >
+              {showPassword ? (
+                <EyeSlashIcon className="h-5 w-5" />
+              ) : (
+                <EyeIcon className="h-5 w-5" />
+              )}
+            </button>
+          </div>
 
-      <p>
-        Already have an account? <a href="/login">Login here</a>
-      </p>
+          {/* Confirm Password */}
+          <div className="flex flex-col gap-1 relative">
+            <label htmlFor="confirmPassword" className="text-sm font-medium">
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm your password"
+              required
+              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
+            >
+              {showConfirmPassword ? (
+                <EyeSlashIcon className="h-5 w-5" />
+              ) : (
+                <EyeIcon className="h-5 w-5" />
+              )}
+            </button>
+          </div>
+
+          {/* Error */}
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition disabled:opacity-50"
+          >
+            {isLoading ? "Registering..." : "Register"}
+          </button>
+        </form>
+
+        {/* Login link */}
+        <p className="mt-4 text-center text-sm">
+          Already have an account?{" "}
+          <a
+            href="/login"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Login here
+          </a>
+        </p>
+      </div>
     </div>
   );
 }

@@ -1,60 +1,41 @@
 import ReactDOM from "react-dom/client";
-import {
-  createBrowserRouter,
-  RouterProvider,
-  Navigate,
-} from "react-router-dom";
-import Layout from "./components/Layout";
-import Dashboard from "./pages/Dashboard";
+import { createBrowserRouter, RouterProvider } from "react-router-dom";
+
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Home from "./pages/Home";
 
-// Role-based dashboards
+import AdminLayout from "./layouts/AdminLayout";
+import AgentLayout from "./layouts/AgentLayout";
+import ClientLayout from "./layouts/ClientLayout";
+
 import DashboardAdmin from "./pages/admin/DashboardAdmin";
 import DashboardAgent from "./pages/agent/DashboardAgent";
 import DashboardClient from "./pages/client/DashboardClient";
 
-import ProtectedRoute from "./components/ProtectedRoute"; // your wrapper
-import { ROLES } from "./types/roleUser";
-import "./index.css";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const router = createBrowserRouter([
+  { path: "/", element: <Home /> },
+  { path: "/login", element: <Login /> },
+  { path: "/register", element: <Register /> },
+
   {
-    path: "/login",
-    element: <Login />,
+    path: "/admin",
+    element: <AdminLayout />,
+    children: [{ path: "dashboard", element: <DashboardAdmin /> }],
   },
+
   {
-    path: "/register",
-    element: <Register />,
+    path: "/agent",
+    element: <AgentLayout />,
+    children: [{ path: "dashboard", element: <DashboardAgent /> }],
   },
+
   {
-    path: "/",
-    element: <Layout />,
-    children: [
-      {
-        path: "",
-        element: <Home />,
-      },
-      {
-        path: "dashboard",
-        element: <Dashboard />, // main dashboard page
-        children: [
-          {
-            path: "admin",
-            element: <DashboardAdmin />,
-          },
-          {
-            path: "agent",
-            element: <DashboardAgent />,
-          },
-          {
-            path: "client",
-            element: <DashboardClient />,
-          },
-        ],
-      },
-    ],
+    path: "/client",
+    element: <ClientLayout />,
+    children: [{ path: "dashboard", element: <DashboardClient /> }],
   },
 ]);
 
