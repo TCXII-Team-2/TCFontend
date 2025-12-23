@@ -15,10 +15,16 @@ import DashboardClient from "./pages/client/DashboardClient";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
-import TicketFormModal from "./components/ClientForm";
 import TicketsPage from "./pages/TicketPage";
 import UnreadTicketsPage from "./pages/UnreadTicketsPage";
+import UntreatedTicketsPage from "./pages/UntreatedTicketsPage";
+import AgentTicketsPage from "./pages/AgentTicketsPage";
+import UsersPage from "./pages/UsersPage";
+import AgentPage from "./pages/AgentPage";
+import AdminAllTickets from "./pages/AdminAlltickets";
+import Knowledgebase from "./pages/Knowledgebase";
 
+import Report from "./pages/Report";
 const router = createBrowserRouter([
   { path: "/", element: <Home /> },
   { path: "/login", element: <Login /> },
@@ -27,7 +33,13 @@ const router = createBrowserRouter([
   {
     path: "/admin",
     element: <AdminLayout />,
-    children: [{ path: "dashboard", element: <DashboardAdmin /> }],
+    children: [
+      { path: "dashboard", element: <DashboardAdmin /> },
+      { path: "users", element: <UsersPage /> },
+      { path: "agents", element: <AgentPage /> },
+      { path: "tickets", element: <AdminAllTickets /> },
+      { path: "reports", element: <Report /> },
+    ],
   },
 
   {
@@ -35,7 +47,9 @@ const router = createBrowserRouter([
     element: <AgentLayout />,
     children: [
       { path: "dashboard", element: <DashboardAgent /> },
-      { path: "tickets", element: <TicketsPage /> },
+      { path: "tickets", element: <AgentTicketsPage /> },
+      { path: "untreatedtickets", element: <UntreatedTicketsPage /> },
+      { path: "knowledgebase", element: <Knowledgebase /> },
     ],
   },
 
@@ -43,10 +57,11 @@ const router = createBrowserRouter([
     path: "/client",
     element: <ClientLayout />,
     children: [
-      { path: "dashboard", element: <DashboardClient /> },
       { path: "tickets", element: <TicketsPage /> },
       { path: "tickets/new", element: <DashboardClient /> },
-      { path: "unread", element: <UnreadTicketsPage /> }, //
+      { path: "unreadtickets", element: <UnreadTicketsPage /> },
+
+      //
     ],
   },
 ]);

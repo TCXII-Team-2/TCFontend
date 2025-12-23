@@ -18,15 +18,6 @@ export default function ClientSidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => navigate("/client/dashboard")}
-        >
-          <LayoutDashboard className="h-5 w-5" />
-          Dashboard
-        </Button>
-
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-3"
           onClick={() => navigate("/client/tickets")}
         >
           <Ticket className="h-5 w-5" />
@@ -45,10 +36,10 @@ export default function ClientSidebar() {
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => navigate("/client/unread")}
+          onClick={() => navigate("/client/unreadtickets")}
         >
           <Inbox className="h-5 w-5" />
-          Unread Responses
+          my Responses
         </Button>
 
         <Separator className="my-4" />

@@ -32,13 +32,13 @@ export default function AgentSidebar() {
           onClick={() => navigate("/agent/tickets")}
         >
           <Ticket className="h-5 w-5" />
-          Tickets
+          All Tickets
         </Button>
 
         <Button
           variant="ghost"
           className="w-full justify-start gap-3"
-          onClick={() => navigate("/agent/unread")}
+          onClick={() => navigate("/agent/untreatedtickets")}
         >
           <Inbox className="h-5 w-5" />
           Untreated tickets

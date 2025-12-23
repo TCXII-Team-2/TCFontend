@@ -6,16 +6,15 @@ interface Ticket {
   sujet: string;
   description: string;
   user_id: string;
-  status?: string; // status peut être undefined
+  status?: string; // status can be undefined
 }
 
-export default function TicketsPage() {
+export default function EscalatedTicketsPage() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 5;
 
@@ -35,7 +34,12 @@ export default function TicketsPage() {
         if (!res.ok) throw new Error("Failed to fetch tickets");
 
         const data: Ticket[] = await res.json();
-        setTickets(data);
+
+        // ✅ Filter only tickets with status "escalated"
+        const escalatedTickets = data.filter(
+          (ticket) => ticket.status?.toLowerCase() === "escalated"
+        );
+        setTickets(escalatedTickets);
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -48,43 +52,29 @@ export default function TicketsPage() {
 
   // ================= STATUS CONFIG =================
   const getStatusConfig = (status?: string) => {
-    const normalizedStatus = status?.toLowerCase() ?? "en_traitement";
+    const normalizedStatus = status?.toLowerCase() || "escalated";
 
     const configs: Record<
       string,
       { color: string; text: string; dotColor: string }
     > = {
-      en_traitement: {
-        color: "bg-yellow-500",
-        text: "In Progress",
-        dotColor: "bg-yellow-400",
-      },
-      completed: {
-        color: "bg-green-500",
-        text: "Completed",
-        dotColor: "bg-green-400",
-      },
-      not_completed: {
+      escalated: {
         color: "bg-red-500",
-        text: "Not Completed",
+        text: "Escalated",
         dotColor: "bg-red-400",
       },
     };
 
-    return configs[normalizedStatus] || configs["en_traitement"];
+    return configs[normalizedStatus] || configs["escalated"];
   };
 
   // ================= FILTER =================
-  const filteredTickets = tickets.filter((ticket) => {
-    const ticketStatus = ticket.status ?? "en_traitement";
-    const matchesStatus =
-      filterStatus === "all" || ticketStatus === filterStatus;
-    const matchesSearch =
+  const filteredTickets = tickets.filter(
+    (ticket) =>
       ticket.sujet?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       ticket.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.user_id?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesStatus && matchesSearch;
-  });
+      ticket.user_id?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // ================= PAGINATION =================
   const totalPages = Math.ceil(filteredTickets.length / ticketsPerPage);
@@ -96,13 +86,6 @@ export default function TicketsPage() {
     if (page < 1 || page > totalPages) return;
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const statusCounts = {
-    all: tickets.length,
-    en_traitement: tickets.filter((t) => t.status === "en_traitement").length,
-    completed: tickets.filter((t) => t.status === "completed").length,
-    not_completed: tickets.filter((t) => t.status === "not_completed").length,
   };
 
   // ================= LOADING / ERROR =================
@@ -128,7 +111,9 @@ export default function TicketsPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-slate-800 mb-4">My Tickets</h1>
+          <h1 className="text-4xl font-bold text-slate-800 mb-4">
+            Escalated Tickets
+          </h1>
 
           {/* Search */}
           <div className="relative mb-6">
@@ -142,43 +127,6 @@ export default function TicketsPage() {
               placeholder="Search tickets by subject, description, or user ID..."
               className="w-full pl-12 py-4 rounded-2xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
-          </div>
-
-          {/* Filters */}
-          <div className="flex gap-3 flex-wrap">
-            {[
-              { key: "all", label: "All", count: statusCounts.all },
-              {
-                key: "en_traitement",
-                label: "In Progress",
-                count: statusCounts.en_traitement,
-              },
-              {
-                key: "not_completed",
-                label: "Not Completed",
-                count: statusCounts.not_completed,
-              },
-              {
-                key: "completed",
-                label: "Completed",
-                count: statusCounts.completed,
-              },
-            ].map((f) => (
-              <button
-                key={f.key}
-                onClick={() => {
-                  setFilterStatus(f.key);
-                  setCurrentPage(1);
-                }}
-                className={`px-4 py-2 rounded-xl ${
-                  filterStatus === f.key
-                    ? "bg-blue-600 text-white"
-                    : "bg-white border"
-                }`}
-              >
-                {f.label} ({f.count})
-              </button>
-            ))}
           </div>
         </div>
 
@@ -216,11 +164,9 @@ export default function TicketsPage() {
               <Search size={40} className="text-slate-400" />
             </div>
             <h3 className="text-xl font-bold text-slate-700 mb-2">
-              No tickets found
+              No escalated tickets found
             </h3>
-            <p className="text-slate-500">
-              Try adjusting your search or filter criteria
-            </p>
+            <p className="text-slate-500">Try adjusting your search criteria</p>
           </div>
         )}
 

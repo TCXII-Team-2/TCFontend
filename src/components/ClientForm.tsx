@@ -1,27 +1,30 @@
 import { useState } from "react";
 
 interface TicketFormData {
-  subject: string;
-  problemDate: string;
+  sujet: string;
+  date_probleme: string;
   description: string;
 }
 
 interface TicketFormModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: TicketFormData) => void;
+  onSuccess?: () => void; // optional refresh callback
 }
 
 export default function TicketFormModal({
   isOpen,
   onClose,
-  onSubmit,
+  onSuccess,
 }: TicketFormModalProps) {
   const [formData, setFormData] = useState<TicketFormData>({
-    subject: "",
-    problemDate: "",
+    sujet: "",
+    date_probleme: "",
     description: "",
   });
+
+  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -33,80 +36,114 @@ export default function TicketFormModal({
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
-    // Réinitialiser après soumission
-    setFormData({
-      subject: "",
-      problemDate: "",
-      description: "",
-    });
-  };
+    setError("");
+    setLoading(true);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      console.log("Fichier sélectionné:", e.target.files[0].name);
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setError("You are not authenticated");
+        return;
+      }
+
+      const response = await fetch("http://localhost:8000/api/v1/tickets/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`, // ✅ TOKEN
+        },
+        body: JSON.stringify({
+          sujet: formData.sujet,
+          date_probleme: formData.date_probleme, // ⚠️ backend naming
+          description: formData.description,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // ✅ FastAPI error handling
+        if (Array.isArray(data.detail)) {
+          setError(data.detail.map((e: any) => e.msg).join(", "));
+        } else if (typeof data.detail === "string") {
+          setError(data.detail);
+        } else {
+          setError("Failed to create ticket");
+        }
+        return;
+      }
+
+      // ✅ Success
+      setFormData({
+        sujet: "",
+        date_probleme: "",
+        description: "",
+      });
+
+      onSuccess?.(); // refresh ticket list if needed
+      onClose();
+    } catch (err) {
+      console.error(err);
+      setError("Server error. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        {/* En-tête de la modale */}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl p-8 w-full max-w-2xl">
+        {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-2xl font-bold text-gray-800">
             Create New Ticket
           </h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 text-3xl p-2 -mr-2"
+            className="text-gray-500 hover:text-gray-700 text-3xl"
           >
             &times;
           </button>
         </div>
 
-        {/* Formulaire */}
+        {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Sujet */}
+          {/* Subject */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Subject *
-            </label>
+            <label className="block text-sm font-medium mb-1">Subject *</label>
             <input
               type="text"
-              name="subject"
-              value={formData.subject}
+              name="sujet"
+              value={formData.sujet}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-              placeholder="Enter ticket subject"
+              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Date du problème */}
+          {/* Date */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium mb-1">
               Date of the problem *
             </label>
             <input
               type="date"
-              name="problemDate"
-              value={formData.problemDate}
+              name="date_probleme"
+              value={formData.date_probleme}
               onChange={handleChange}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
+              className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-sm text-gray-500 mt-1">
-              When did the problem occur?
-            </p>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium mb-1">
               Description *
             </label>
             <textarea
@@ -115,69 +152,28 @@ export default function TicketFormModal({
               onChange={handleChange}
               rows={5}
               required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition resize-none"
-              placeholder="Describe your issue in detail..."
+              className="w-full px-4 py-3 border rounded-lg resize-none focus:ring-2 focus:ring-blue-500"
             />
-            <p className="text-sm text-gray-500 mt-1">
-              Please provide as much detail as possible
-            </p>
           </div>
 
-          {/* Fichier joint */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Attachment (Optional)
-            </label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors cursor-pointer">
-              <label htmlFor="file-upload" className="cursor-pointer">
-                <div className="flex flex-col items-center">
-                  <svg
-                    className="w-10 h-10 text-gray-400 mb-2"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
-                    />
-                  </svg>
-                  <p className="text-gray-600">
-                    <span className="text-blue-600 hover:text-blue-800 font-medium">
-                      Click to upload
-                    </span>{" "}
-                    or drag and drop
-                  </p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    PNG, JPG, PDF up to 10MB
-                  </p>
-                </div>
-              </label>
-              <input
-                type="file"
-                id="file-upload"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-            </div>
-          </div>
+          {/* Error */}
+          {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
 
-          {/* Boutons d'action */}
-          <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+          {/* Actions */}
+          <div className="flex justify-end gap-4 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 border rounded-lg hover:bg-gray-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-6 py-3 bg-[#4A84DD] text-white font-medium rounded-lg hover:bg-[#3f73c4] transition-colors shadow-sm"
+              disabled={loading}
+              className="px-6 py-3 bg-[#4A84DD] text-white rounded-lg hover:bg-[#3f73c4] disabled:opacity-50"
             >
-              Create Ticket
+              {loading ? "Creating..." : "Create Ticket"}
             </button>
           </div>
         </form>

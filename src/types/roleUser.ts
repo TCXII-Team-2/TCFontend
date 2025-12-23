@@ -1,5 +1,3 @@
-import { Type } from "lucide-react";
-
 export const ROLES = {
   ADMIN: "admin",
   AGENT: "agent",

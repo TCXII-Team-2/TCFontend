@@ -23,6 +23,7 @@ export default function Register() {
     setIsLoading(true);
 
     try {
+      // 1️⃣ Validations frontend
       if (
         !firstName ||
         !familyName ||
@@ -31,46 +32,52 @@ export default function Register() {
         !confirmPassword
       ) {
         setError("Please fill in all fields");
-        setIsLoading(false);
         return;
       }
 
       if (password.length < 8) {
         setError("Password must be at least 8 characters");
-        setIsLoading(false);
         return;
       }
 
       if (password !== confirmPassword) {
         setError("Passwords do not match");
-        setIsLoading(false);
         return;
       }
 
-      let role: string = "";
-      if (email.includes("admin")) role = ROLES.ADMIN;
-      else if (email.includes("agent")) role = ROLES.AGENT;
-      else role = ROLES.CLIENT;
+      // 2️⃣ Appel API
+      const response = await fetch("http://127.0.0.1:8000/api/v1/users/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `${firstName} ${familyName}`,
+          email: email,
+          hashed_password: password, // ⚠️ EXACTEMENT CE NOM
+        }),
+      });
 
-      localStorage.setItem("userRole", role);
+      // 3️⃣ Gestion des erreurs API
+      if (!response.ok) {
+        const errorData = await response.json();
 
-      switch (role) {
-        case ROLES.ADMIN:
-          navigate("/dashboard/admin");
-          break;
-        case ROLES.AGENT:
-          navigate("/dashboard/agent");
-          break;
-        case ROLES.CLIENT:
-          navigate("/dashboard/client");
-          break;
-        default:
-          navigate("/unauthorized");
-          break;
+        if (response.status === 422) {
+          setError("Invalid data. Please check your inputs.");
+        } else {
+          setError(errorData.detail || "Registration failed");
+        }
+        return;
       }
+
+      // 4️⃣ Succès
+      const user = await response.json();
+      console.log("User created:", user);
+
+      navigate("/login");
     } catch (err) {
-      setError("An error occurred. Please try again.");
       console.error(err);
+      setError("Server error. Please try again.");
     } finally {
       setIsLoading(false);
     }

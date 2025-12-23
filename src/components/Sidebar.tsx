@@ -5,7 +5,6 @@ import {
   AlertCircle,
   CheckCircle,
   BarChart3,
-  Settings,
 } from "lucide-react";
 
 import { Button } from "./ui/button";

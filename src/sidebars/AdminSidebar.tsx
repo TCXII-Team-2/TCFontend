@@ -31,7 +31,7 @@ export default function AdminSidebar() {
           onClick={() => navigate("/admin/users")}
         >
           <Users className="h-5 w-5" />
-          Users
+          All Users
         </Button>
 
         <Button

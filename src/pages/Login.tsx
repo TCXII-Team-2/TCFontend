@@ -1,14 +1,15 @@
+// src/pages/Login.tsx
 import { useState } from "react";
-import { useNavigate } from "react-router-dom"; // ✅ ADDED
-import { ROLES } from "../types/roleUser"; // ✅ ADDED: Make sure you have roles.ts exporting ADMIN, AGENT, CLIENT
+import { useNavigate } from "react-router-dom";
 import { EyeIcon, EyeSlashIcon } from "@heroicons/react/24/solid";
 import logo from "../assets/logo.svg";
+
 export default function Login() {
-  const navigate = useNavigate(); // ✅ ADDED
+  const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // ✅ ADDED
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -18,41 +19,50 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      console.log("Login attempt:", { email, password });
+      const body = new URLSearchParams({
+        grant_type: "password",
+        username: email,
+        password: password,
+      });
 
-      if (!email || !password) {
-        setError("Please fill in all fields");
+      const response = await fetch("http://127.0.0.1:8000/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: body.toString(),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.detail || "Login failed");
         return;
       }
 
-      let role: string = "";
-      if (email === "admin@example.com") role = ROLES.ADMIN;
-      else if (email === "agent@example.com") role = ROLES.AGENT;
-      else if (email === "client@example.com") role = ROLES.CLIENT;
-      else {
-        setError("Invalid email or password");
-        return;
-      }
+      // ✅ Save auth data
+      localStorage.setItem("token", data.access_token);
+      localStorage.setItem("userId", data.userId.toString());
+      localStorage.setItem("username", data.username);
+      localStorage.setItem("userRole", data.role);
 
-      localStorage.setItem("userRole", role);
-
-      switch (role) {
-        case ROLES.ADMIN:
-          navigate("/dashboard/admin");
+      // ✅ Redirect by role
+      switch (data.role) {
+        case "admin":
+          navigate("/admin/dashboard");
           break;
-        case ROLES.AGENT:
-          navigate("/dashboard/agent");
+        case "agent":
+          navigate("/agent/dashboard");
           break;
-        case ROLES.CLIENT:
-          navigate("/dashboard/client");
+        case "user":
+          navigate("/client/tickets");
           break;
         default:
           navigate("/unauthorized");
-          break;
       }
     } catch (err) {
-      setError("An error occurred. Please try again.");
       console.error(err);
+      setError("Server error");
     } finally {
       setIsLoading(false);
     }
@@ -60,53 +70,31 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="w-full max-w-md bg-white rounded-lg p-8">
-        <img
-          src={logo}
-          alt="Logo"
-          height={200}
-          width={200}
-          className="mx-auto mb-4"
-        />
-        <h1 className="text-3xl font-bold mb-6 text-center">Login</h1>
+      <div className="w-full max-w-md bg-white p-8 rounded-lg">
+        <img src={logo} className="mx-auto mb-4 w-32" />
+        <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Email */}
-          <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-sm font-medium">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            type="email"
+            placeholder="Email"
+            className="w-full border px-3 py-2 rounded"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
 
-          {/* Password */}
-          <div className="flex flex-col gap-1 relative">
-            <label htmlFor="password" className="text-sm font-medium">
-              Password
-            </label>
+          <div className="relative">
             <input
-              id="password"
-              type={showPassword ? "text" : "password"} // ✅ toggled
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              className="w-full border px-3 py-2 rounded pr-10"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
-              required
-              className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 pr-10"
             />
-
-            {/* Eye button */}
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-8 text-gray-500 hover:text-gray-700"
+              className="absolute right-3 top-2.5 text-gray-500"
             >
               {showPassword ? (
                 <EyeSlashIcon className="h-5 w-5" />
@@ -116,29 +104,16 @@ export default function Login() {
             </button>
           </div>
 
-          {/* Error */}
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          {/* Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 rounded font-medium hover:bg-blue-700 transition disabled:opacity-50"
+            className="w-full bg-blue-600 text-white py-2 rounded"
           >
             {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
-
-        {/* Register link */}
-        <p className="mt-4 text-center text-sm">
-          Don&apos;t have an account?{" "}
-          <a
-            href="/register"
-            className="text-blue-600 hover:underline font-medium"
-          >
-            Register here
-          </a>
-        </p>
       </div>
     </div>
   );
