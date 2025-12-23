@@ -144,27 +144,6 @@ export default function TicketDetail({
     fetchTicketDetails();
   };
 
-  // Gestion de la résolution du ticket
-  const handleResolveTicket = async () => {
-    if (!ticket) return;
-
-    try {
-      const response = await fetch(`/api/tickets/${ticketId}/resolve`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ statut: "résolu" }),
-      });
-
-      if (response.ok) {
-        fetchTicketDetails(); // Rafraîchir les données
-      }
-    } catch (err) {
-      console.error("Erreur lors de la résolution:", err);
-    }
-  };
-
   // État de chargement
   if (loading) {
     return (
