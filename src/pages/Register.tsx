@@ -48,19 +48,20 @@ export default function Register() {
         return;
       }
 
-      // 2️⃣ Appel API pour créer l'utilisateur
-      const createResponse = await fetch(
-        "http://127.0.0.1:8000/api/v1/users/",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name: `${firstName} ${familyName}`,
-            email: email,
-            hashed_password: password,
-          }),
-        }
-      );
+
+      // 2️⃣ Appel API
+      const response = await fetch("http://127.0.0.1:8000/api/v1/users/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `${firstName} ${familyName}`,
+          email: email,
+          password: password,
+        }),
+      });
+
 
       if (!createResponse.ok) {
         const errorData = await createResponse.json();

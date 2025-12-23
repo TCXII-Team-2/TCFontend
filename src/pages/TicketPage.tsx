@@ -1,16 +1,22 @@
-import TicketDetail from "../components/TicketDetail";
+
+import TicketDetail from '../components/TicketDetail';
+
 import { useEffect, useState } from "react";
 import { User, Search, ChevronLeft, ChevronRight } from "lucide-react";
+
 
 interface Ticket {
   id: number;
   sujet: string;
   description: string;
   user_id: string;
-  status?: string;
+  statut?: string;
+  date_creation?: string;
+  date_probleme?: string;
 }
 
 export default function TicketsPage() {
+
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [showTicketDetail, setShowTicketDetail] = useState(false);
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -21,8 +27,6 @@ export default function TicketsPage() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const ticketsPerPage = 5;
-
-  const userId = localStorage.getItem("userId");
 
   // ================= FETCH AND FILTER TICKETS =================
   useEffect(() => {
@@ -38,15 +42,7 @@ export default function TicketsPage() {
 
         if (!res.ok) throw new Error("Failed to fetch tickets");
 
-        let data: Ticket[] = await res.json();
-
-        // Filter tickets for logged-in user
-        if (userId) {
-          data = data.filter(
-            (t) => String(t.user_id).trim() === String(userId).trim()
-          );
-        }
-
+        const data: Ticket[] = await res.json();
         setTickets(data);
       } catch (err: any) {
         setError(err.message);
@@ -56,29 +52,26 @@ export default function TicketsPage() {
     };
 
     fetchTickets();
-  }, [userId]);
+  }, []);
 
   // ================= STATUS CONFIG =================
-  const getStatusConfig = (status?: string) => {
-    const normalized = status?.toLowerCase() ?? "en_traitement";
+  const getStatusConfig = (statut?: string) => {
+    const normalized = statut?.toLowerCase() ?? "en_traitement";
     const configs: Record<string, { color: string; text: string }> = {
       en_traitement: { color: "bg-yellow-500", text: "En Traitement" },
-      in_progress: { color: "bg-yellow-500", text: "In Progress" },
-      completed: { color: "bg-green-500", text: "Completed" },
-      not_completed: { color: "bg-red-500", text: "Not Completed" },
+      escalade: { color: "bg-orange-500", text: "Escalade" },
+      rejetee: { color: "bg-red-500", text: "Rejetée" },
+      resolue: { color: "bg-green-500", text: "Résolue" },
     };
     return configs[normalized] || configs["en_traitement"];
   };
 
   // ================= FILTERED TICKETS =================
   const filteredTickets = tickets.filter((ticket) => {
-    const ticketStatus = ticket.status?.toLowerCase() ?? "en_traitement";
+    const ticketStatus = ticket.statut?.toLowerCase() ?? "en_traitement";
 
     const matchesStatus =
-      filterStatus === "all" ||
-      (filterStatus === "en_traitement"
-        ? ticketStatus === "en_traitement" || ticketStatus === "in_progress"
-        : ticketStatus === filterStatus);
+      filterStatus === "all" || ticketStatus === filterStatus;
 
     const matchesSearch =
       ticket.sujet?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -103,11 +96,11 @@ export default function TicketsPage() {
   const statusCounts = {
     all: tickets.length,
     en_traitement: tickets.filter(
-      (t) => (t.status ?? "en_traitement") === "en_traitement"
+      (t) => (t.statut ?? "en_traitement") === "en_traitement"
     ).length,
-    in_progress: tickets.filter((t) => t.status === "in_progress").length,
-    completed: tickets.filter((t) => t.status === "completed").length,
-    not_completed: tickets.filter((t) => t.status === "not_completed").length,
+    escalade: tickets.filter((t) => t.statut === "escalade").length,
+    rejetee: tickets.filter((t) => t.statut === "rejetee").length,
+    resolue: tickets.filter((t) => t.statut === "resolue").length,
   };
 
   // ================= LOADING / ERROR =================
@@ -157,19 +150,19 @@ export default function TicketsPage() {
                 count: statusCounts.en_traitement,
               },
               {
-                key: "in_progress",
-                label: "In Progress",
-                count: statusCounts.in_progress,
+                key: "escalade",
+                label: "Escalade",
+                count: statusCounts.escalade,
               },
               {
-                key: "completed",
-                label: "Completed",
-                count: statusCounts.completed,
+                key: "rejetee",
+                label: "Rejetée",
+                count: statusCounts.rejetee,
               },
               {
-                key: "not_completed",
-                label: "Not Completed",
-                count: statusCounts.not_completed,
+                key: "resolue",
+                label: "Résolue",
+                count: statusCounts.resolue,
               },
             ].map((f) => (
               <button
@@ -193,14 +186,15 @@ export default function TicketsPage() {
         {/* Tickets */}
         <div className="space-y-4">
           {currentTickets.map((ticket) => {
-            const status = getStatusConfig(ticket.status);
+            const status = getStatusConfig(ticket.statut);
             return (
               <div
                 key={ticket.id}
                 onClick={() => {
-                  setSelectedTicketId(ticket.id);
-                  setShowTicketDetail(true);
-                }}
+            setSelectedTicketId(ticket.id);
+            setShowTicketDetail(true);
+        }}
+
                 className="bg-white p-6 rounded-2xl shadow hover:shadow-lg border relative"
               >
                 <div className="flex justify-between items-start">
@@ -264,21 +258,23 @@ export default function TicketsPage() {
         )}
       </div>
       {showTicketDetail && selectedTicketId && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="p-6">
-              <TicketDetail
-                ticketId={selectedTicketId}
-                onClose={() => {
-                  setShowTicketDetail(false);
-                  setSelectedTicketId(null);
-                }}
-                showInModal={true}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+      <div className="p-6">
+        <TicketDetail 
+          ticketId={selectedTicketId}
+          onClose={() => {
+            setShowTicketDetail(false);
+            setSelectedTicketId(null);
+          }}
+          showInModal={true}
+        />
+      </div>
+    </div>
+  </div>
+)}
+
     </div>
   );
 }

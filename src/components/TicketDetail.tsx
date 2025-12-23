@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react";
 
+// Interface for Response
+interface ApiResponse {
+  id: number;
+  response_type: string;
+  response_text: string;
+  date_creation: string;
+  agent_id: number | null;
+}
+
 // Interface API exacte
 interface ApiTicket {
   id: number;
@@ -8,7 +17,8 @@ interface ApiTicket {
   date_creation: string;
   date_probleme: string;
   user_id: number;
-  statut: "en_traitement" | "escaladé" | "résolu"; // Adapte selon les valeurs réelles
+  statut: "en_traitement" | "escalade" | "rejetee" | "resolue";
+  responses?: ApiResponse[];
 }
 
 // Interface pour le composant
@@ -35,6 +45,7 @@ export default function TicketDetail({
       setLoading(true);
       setError(null);
 
+      const token = localStorage.getItem("token");
       const response = await fetch(
         `http://127.0.0.1:8000/api/v1/tickets/${ticketId}`,
         {
@@ -42,6 +53,7 @@ export default function TicketDetail({
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -101,28 +113,23 @@ export default function TicketDetail({
     > = {
       en_traitement: {
         label: "En traitement",
-        color: "text-blue-800",
-        bgColor: "bg-blue-100",
-      },
-      ouvert: {
-        label: "Ouvert",
         color: "text-yellow-800",
         bgColor: "bg-yellow-100",
       },
-      résolu: {
-        label: "Résolu",
-        color: "text-green-800",
-        bgColor: "bg-green-100",
+      escalade: {
+        label: "Escalade",
+        color: "text-orange-800",
+        bgColor: "bg-orange-100",
       },
-      fermé: {
-        label: "Fermé",
-        color: "text-gray-800",
-        bgColor: "bg-gray-100",
-      },
-      urgent: {
-        label: "Urgent",
+      rejetee: {
+        label: "Rejetée",
         color: "text-red-800",
         bgColor: "bg-red-100",
+      },
+      resolue: {
+        label: "Résolue",
+        color: "text-green-800",
+        bgColor: "bg-green-100",
       },
     };
 
@@ -358,6 +365,50 @@ export default function TicketDetail({
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Responses Section */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold text-gray-900 mb-3">
+          Réponses ({ticket.responses?.length || 0})
+        </h3>
+        {ticket.responses && ticket.responses.length > 0 ? (
+          <div className="space-y-4">
+            {ticket.responses.map((response) => (
+              <div
+                key={response.id}
+                className="bg-gray-50 rounded-lg p-4 border border-gray-200"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="flex items-center gap-2">
+                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                      response.response_type === 'AI' 
+                        ? 'bg-purple-100 text-purple-800' 
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {response.response_type}
+                    </span>
+                    {response.agent_id && (
+                      <span className="text-sm text-gray-600">
+                        Agent ID: {response.agent_id}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {formatDateTime(response.date_creation)}
+                  </span>
+                </div>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {response.response_text}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="bg-gray-50 rounded-lg p-6 text-center">
+            <p className="text-gray-500">Aucune réponse pour le moment</p>
+          </div>
+        )}
       </div>
 
       {/* Actions */}
