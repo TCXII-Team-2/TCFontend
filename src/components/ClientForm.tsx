@@ -69,7 +69,14 @@ export default function TicketFormModal({
         if (Array.isArray(data.detail)) {
           setError(data.detail.map((e: any) => e.msg).join(", "));
         } else if (typeof data.detail === "string") {
-          setError(data.detail);
+          // Check for workflow-related errors
+          if (data.detail.includes("Workflow failed") || 
+              data.detail.includes("Keywords must be") ||
+              data.detail.includes("Workflow API error")) {
+            setError("Your ticket description is too vague or ambiguous. Please provide more details about your issue to help us process your request.");
+          } else {
+            setError(data.detail);
+          }
         } else {
           setError("Failed to create ticket");
         }
